@@ -1,5 +1,3 @@
-#### **Filename:** `economics.md`
-```markdown
 # Cost and Fairness Model
 
 GPUs are enforced using **GPU-seconds**, not fractional GPUs.
@@ -16,9 +14,9 @@ Instead, fairness is enforced over time:
 
 By enforcing strict "GPU-seconds" quotas rather than allocating full GPUs per tenant:
 
-1.  **Utilization:** Increases GPU bin-packing density (running small jobs in gaps), reducing idle waste.
-2.  **Predictability:** Tenants are capped by *spend rate*, eliminating "surprise" cloud bills.
-3.  **Risk Mitigation:** A runaway recursive agent loop is killed automatically when the token bucket empties, preventing financial leakage.
+1. **Utilization:** Increases GPU bin-packing density (running small jobs in gaps), reducing idle waste.
+2. **Predictability:** Tenants are capped by *spend rate*, eliminating "surprise" cloud bills.
+3. **Risk Mitigation:** A runaway recursive agent loop is killed automatically when the token bucket empties, preventing financial leakage.
 
 ## What this enforces
 - predictable cost per tenant
@@ -27,4 +25,3 @@ By enforcing strict "GPU-seconds" quotas rather than allocating full GPUs per te
 - budget-safe scaling
 
 This aligns technical execution with financial reality.
-```
