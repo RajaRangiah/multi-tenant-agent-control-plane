@@ -30,6 +30,7 @@ sequenceDiagram
         end
     end
 ```
+
 ## **Two-plane model**
 ## Control plane (Redis + API)
 
@@ -57,3 +58,8 @@ sequenceDiagram
 * Fairness is enforced before execution (token bucket at claim time).
 
 This design favors determinism over cleverness.
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+</script>
