@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Control Plane - Dashboard</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; padding: 0 20px; }
+        h1 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .card h3 { margin-top: 0; color: #0066cc; }
+        .card p { color: #666; }
+        a { text-decoration: none; color: inherit; display: block; }
+    </style>
+</head>
+<body>
+
+    <h1>Multi-Tenant Agent Control Plane</h1>
+    <p>Welcome to the reference implementation dashboard.</p>
+
+    <a href="/static/architecture.html">
+        <div class="card">
+            <h3>📊 System Architecture</h3>
+            <p>View the visual diagram of how the API, Redis, and Workers interact.</p>
+        </div>
+    </a>
+
+    <a href="/docs">
+        <div class="card">
+            <h3>🔌 API Documentation</h3>
+            <p>Interactive Swagger UI to test the /submit endpoint manually.</p>
+        </div>
+    </a>
+
+    <a href="/static/redis_schema.py">
+        <div class="card">
+            <h3>📄 Redis Schema Code</h3>
+            <p>View the raw Python code for the database structure.</p>
+        </div>
+    </a>
+
+</body>
+</html>

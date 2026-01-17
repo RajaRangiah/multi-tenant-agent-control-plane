@@ -3,13 +3,27 @@
 
 import time
 import uuid
+import mimetypes
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.responses import FileResponse # <--- NEW: Needed to serve index.html
+from fastapi.staticfiles import StaticFiles
 from redis.asyncio import Redis
 
 # Ensure redis_schema.py is in the same folder
 from redis_schema import job_key, queue_key
 
+# 1. Force the server to treat .py files as text so they display in-browser
+mimetypes.add_type('text/plain', '.py')
+
 app = FastAPI()
+
+# 2. MOUNT STATIC FILES (Access files at /static/filename)
+app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+
+# 3. HOME PAGE ROUTE (Serves index.html at the root URL)
+@app.get("/")
+async def read_index():
+    return FileResponse('index.html')
 
 # Connect to Redis
 r = Redis.from_url("redis://localhost:6379", decode_responses=True)
