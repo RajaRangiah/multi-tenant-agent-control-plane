@@ -5,9 +5,13 @@ import time
 import uuid
 from fastapi import FastAPI, Header, HTTPException
 from redis.asyncio import Redis
+
+# Ensure redis_schema.py is in the same folder
 from redis_schema import job_key, queue_key
 
 app = FastAPI()
+
+# Connect to Redis
 r = Redis.from_url("redis://localhost:6379", decode_responses=True)
 
 def now_ms() -> int:
