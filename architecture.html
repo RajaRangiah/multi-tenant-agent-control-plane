@@ -29,6 +29,12 @@
       font-size: 14px;
       color: #555;
     }
+    section {
+      margin-top: 40px;
+    }
+    ul {
+      margin-top: 8px;
+    }
     img {
       max-width: 100%;
       border: 1px solid #e5e7eb;
@@ -85,6 +91,53 @@ sequenceDiagram
     end
     </div>
 
+    <!-- Two-plane model -->
+    <section>
+      <h2>Two-plane model</h2>
+
+      <h3>Control plane (Redis + API)</h3>
+      <ul>
+        <li>Owns truth: job state, quotas, leases</li>
+        <li>Decides who is allowed to run</li>
+        <li>Ensures retries and crash recovery are safe</li>
+      </ul>
+
+      <h3>Data plane (Workers)</h3>
+      <ul>
+        <li>Stateless executors</li>
+        <li>Run jobs only while holding a valid lease</li>
+        <li>Can crash without corrupting global state</li>
+      </ul>
+    </section>
+
+    <!-- Key invariants -->
+    <section>
+      <h2>Key invariants</h2>
+      <ul>
+        <li>
+          <strong>No job runs without paying</strong>
+          (quota charge happens atomically inside <code>CLAIM</code>).
+        </li>
+        <li>
+          <strong>No worker owns a job permanently</strong>
+          (execution rights are leased).
+        </li>
+        <li>
+          <strong>If a worker dies, the system recovers</strong>
+          (lease expiry + reaping).
+        </li>
+        <li>
+          <strong>Fairness is enforced before execution</strong>
+          (token bucket at claim time).
+        </li>
+      </ul>
+
+      <p style="margin-top: 16px; font-style: italic;">
+        This design favors determinism over cleverness.
+      </p>
+    </section>
+
+    <!-- Fallback -->
     <div class="note">
       <p>
         <strong>Fallback image:</strong> If Mermaid rendering fails, see the
