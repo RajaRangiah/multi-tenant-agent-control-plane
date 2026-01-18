@@ -1,44 +1,134 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Control Plane - Dashboard</title>
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; padding: 0 20px; }
-        h1 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; transition: box-shadow 0.2s; }
-        .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .card h3 { margin-top: 0; color: #0066cc; }
-        .card p { color: #666; }
-        a { text-decoration: none; color: inherit; display: block; }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Code Reference</title>
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 24px;
+      background: #fff;
+      color: #111;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1, h2 {
+      margin-top: 32px;
+    }
+    ul {
+      margin-top: 8px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    code {
+      background: #f6f8fa;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .section {
+      margin-top: 36px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+    a {
+      text-decoration: none;
+    }
+  </style>
 </head>
+
 <body>
+  <div class="container">
+    <h1>Code Reference</h1>
 
-    <h1>Multi-Tenant Agent Control Plane</h1>
-    <p>Welcome to the reference implementation dashboard.</p>
+    <p>
+      This directory contains the <strong>control-plane implementation</strong>
+      for a governed, multi-tenant agent runtime.
+    </p>
 
-    <a href="/static/architecture.html">
-        <div class="card">
-            <h3>📊 System Architecture</h3>
-            <p>View the visual diagram of how the API, Redis, and Workers interact.</p>
-        </div>
-    </a>
+    <p>
+      Files are organized by <em>system responsibility</em>, not by framework
+      or abstraction layer.
+    </p>
 
-    <a href="/docs">
-        <div class="card">
-            <h3>🔌 API Documentation</h3>
-            <p>Interactive Swagger UI to test the /submit endpoint manually.</p>
-        </div>
-    </a>
+    <!-- API -->
+    <div class="section">
+      <h2>API ingress</h2>
+      <ul>
+        <li>
+          <strong><a href="https://github.com/RajaRangiah/multi-tenant-agent-control-plane/blob/main/code/api_server.py">api_server.py</a></strong><br />
+          Durable job submission endpoint.
+          Performs budget checks, initializes job state, and enqueues work
+          into Redis Streams atomically.
+        </li>
+      </ul>
+    </div>
 
-    <a href="/static/redis_schema.py">
-        <div class="card">
-            <h3>📄 Redis Schema Code</h3>
-            <p>View the raw Python code for the database structure.</p>
-        </div>
-    </a>
+    <!-- Atomic state -->
+    <div class="section">
+      <h2>Atomic state transitions (Redis + Lua)</h2>
+      <ul>
+        <li>
+          <strong><a href="https://github.com/RajaRangiah/multi-tenant-agent-control-plane/blob/main/code/lua_ops.py">lua_ops.py</a></strong><br />
+          Defines atomic <code>CLAIM</code>, <code>RENEW</code>, and
+          <code>FINALIZE</code> operations.
+          Enforces quota charging, lease ownership, and idempotent completion.
+        </li>
 
+        <li>
+          <strong><a href="https://github.com/RajaRangiah/multi-tenant-agent-control-plane/blob/main/code/redis_schema.py">redis_schema.py</a></strong><br />
+          Canonical Redis key schema for job state, leases, quotas, and observability.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Scheduling -->
+    <div class="section">
+      <h2>Scheduling & backoff</h2>
+      <ul>
+        <li>
+          <strong><a href="https://github.com/RajaRangiah/multi-tenant-agent-control-plane/blob/main/code/delayed_scheduler.py">delayed_scheduler.py</a></strong><br />
+          Moves jobs from delayed queues back into execution streams
+          after backoff or budget replenishment.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Crash recovery -->
+    <div class="section">
+      <h2>Crash recovery</h2>
+      <ul>
+        <li>
+          <strong><a href="https://github.com/RajaRangiah/multi-tenant-agent-control-plane/blob/main/code/pel_reaper.py">pel_reaper.py</a></strong><br />
+          Periodically scans Redis Stream PELs to recover jobs
+          abandoned by crashed workers.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Worker -->
+    <div class="section">
+      <h2>Worker execution discipline</h2>
+      <ul>
+        <li>
+          <strong><a href="https://github.com/RajaRangiah/multi-tenant-agent-control-plane/blob/main/code/worker.py">worker.py</a></strong><br />
+          Stateless executor.
+          Pulls jobs, claims leases, renews ownership while running,
+          and finalizes execution deterministically.
+        </li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <p style="font-style: italic;">
+        Workers contain no durable state. All safety and correctness
+        live in the control plane.
+      </p>
+    </div>
+  </div>
 </body>
 </html>
