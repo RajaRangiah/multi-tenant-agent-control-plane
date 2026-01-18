@@ -49,9 +49,10 @@ They can crash without losing work or leaking GPUs.
 
 ## Repo tour (recommended reading order)
 
-* [**Architecture Overview**](./architecture.md) – core invariants, diagrams, and failure model
-* [**Economics & ROI**](./economics.md) – fairness and cost governance model
+* [**Architecture Overview**](./architecture.html) – core invariants, diagrams, and failure model
+* [**Economics & ROI**](./economics.html) – fairness and cost governance model
 * [**Code Reference**](./code/) – implementation details
+
 
 ---
 
