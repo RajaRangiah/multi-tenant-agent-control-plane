@@ -2,158 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Architecture</title>
-
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Architecture Overview — Multi-Tenant Agent Control Plane</title>
   <style>
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      margin: 24px;
-      background: #fff;
-      color: #111;
-    }
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-    .mermaid {
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 16px;
-      overflow-x: auto;
-      background: #fff;
-    }
-    .note {
-      margin-top: 18px;
-      font-size: 14px;
-      color: #555;
-    }
-    section {
-      margin-top: 40px;
-    }
-    ul {
-      margin-top: 8px;
-    }
-    img {
-      max-width: 100%;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      margin-top: 12px;
-    }
-    code {
-      background: #f6f8fa;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
+    body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; margin: 0; line-height: 1.55; }
+    header { padding: 22px 18px; border-bottom: 1px solid #e5e7eb; }
+    nav a { margin-right: 14px; text-decoration: none; color: #111827; }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 80px; }
+    h1 { margin: 0 0 10px; font-size: 28px; }
+    h2 { margin-top: 28px; font-size: 20px; }
+    .lead { color: #374151; font-size: 16px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; background: #fff; margin: 14px 0; }
+    code, pre { font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace; }
+    pre { background: #0b1020; color: #e5e7eb; padding: 14px 16px; border-radius: 12px; overflow: auto; }
+    .kicker { font-weight: 600; }
+    ul { margin-top: 8px; }
   </style>
-
-  <!-- Mermaid (modern browsers) -->
-  <script type="module">
-    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-    mermaid.initialize({ startOnLoad: true, theme: "default" });
-  </script>
-
-  <!-- Mermaid fallback for Safari / iPad -->
-  <script nomodule src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <script nomodule>
-    mermaid.initialize({ startOnLoad: true, theme: "default" });
-  </script>
 </head>
-
 <body>
-  <div class="container">
-    <h1>System Architecture</h1>
-    <p>
-      Budget-gated job submission with Redis-backed leasing, fairness, and
-      stateless workers.
+  <header>
+    <nav>
+      <a href="./">Home</a>
+      <a href="./architecture.html">Architecture</a>
+      <a href="./economics.html">Economics</a>
+      <a href="./code/">Code</a>
+      <a href="https://github.com/RajaRangiah/multi-tenant-agent-control-plane">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Architecture Overview</h1>
+    <p class="lead">
+      This system is built around one rule: <span class="kicker">Workers execute. The system decides.</span><br/>
+      That separation is what makes fairness, retries, and crash recovery reliable at scale.
     </p>
 
-    <div class="mermaid">
-sequenceDiagram
-    participant U as User
-    participant A as API (FastAPI)
-    participant R as Redis (Stream/Hash)
-    participant W as Worker (Stateless)
+    <h2>Two-plane model</h2>
 
-    U->>A: Submit Job (Budget Check)
-    A->>R: HSET Job State + XADD Queue
-    R-->>A: Job ID (Queued)
-    A-->>U: 202 Accepted
-
-    loop Lease Cycle
-        W->>R: XREADGROUP (Get Job)
-        W->>R: EVAL (Claim + Deduct Credits)
-
-        alt Sufficient Credits
-            R-->>W: OK + Lease
-            W->>W: Execute Agent
-            W->>R: EVAL (Renew Lease)
-            W->>R: EVAL (Finalize + Release Lease)
-        else Insufficient Credits
-            R-->>W: DENY
-            W->>R: Move to Delayed Queue
-        end
-    end
-    </div>
-
-    <!-- Two-plane model -->
-    <section>
-      <h2>Two-plane model</h2>
-
-      <h3>Control plane (Redis + API)</h3>
+    <div class="card">
+      <div class="kicker">Control plane (Redis + API)</div>
       <ul>
         <li>Owns truth: job state, quotas, leases</li>
-        <li>Decides who is allowed to run</li>
-        <li>Ensures retries and crash recovery are safe</li>
+        <li>Decides who is allowed to run and for how long</li>
+        <li>Makes retries and crash recovery safe</li>
       </ul>
+    </div>
 
-      <h3>Data plane (Workers)</h3>
+    <div class="card">
+      <div class="kicker">Data plane (Workers)</div>
       <ul>
         <li>Stateless executors</li>
-        <li>Run jobs only while holding a valid lease</li>
+        <li>Run only while holding a valid lease</li>
         <li>Can crash without corrupting global state</li>
       </ul>
-    </section>
-
-    <!-- Key invariants -->
-    <section>
-      <h2>Key invariants</h2>
-      <ul>
-        <li>
-          <strong>No job runs without paying</strong>
-          (quota charge happens atomically inside <code>CLAIM</code>).
-        </li>
-        <li>
-          <strong>No worker owns a job permanently</strong>
-          (execution rights are leased).
-        </li>
-        <li>
-          <strong>If a worker dies, the system recovers</strong>
-          (lease expiry + reaping).
-        </li>
-        <li>
-          <strong>Fairness is enforced before execution</strong>
-          (token bucket at claim time).
-        </li>
-      </ul>
-
-      <p style="margin-top: 16px; font-style: italic;">
-        This design favors determinism over cleverness.
-      </p>
-    </section>
-
-    <!-- Fallback -->
-    <div class="note">
-      <p>
-        <strong>Fallback image:</strong> If Mermaid rendering fails, see the
-        static diagram below.
-      </p>
-      <img src="./static/architecture.png" alt="Architecture diagram" />
-      <p>
-        Source-of-truth text lives in <code>architecture.md</code>.
-      </p>
     </div>
-  </div>
+
+    <h2>Core invariants (the “why this works” list)</h2>
+    <ul>
+      <li><b>No job runs without paying</b> (quota is charged at claim time)</li>
+      <li><b>No double execution</b> (only QUEUED jobs can be claimed)</li>
+      <li><b>No leaked GPUs</b> (execution rights are leased and reclaimable)</li>
+      <li><b>Failures are boring</b> (crashes turn into safe retries)</li>
+      <li><b>Fairness is enforced before execution</b> (not retroactively)</li>
+    </ul>
+
+    <h2>End-to-end flow</h2>
+    <pre>
+Client → API
+  1) Create durable job record (state=QUEUED)
+  2) XADD {tenant_id, job_id} into sys:queue:jobs
+
+Worker (consumer group)
+  3) Read job_id → atomic CLAIM (charge quota + set RUNNING + create lease)
+  4) Execute while renewing lease
+  5) FINALIZE (set COMPLETED/FAILED + release lease)
+  6) XACK stream message
+
+Recovery paths
+  - Delayed scheduler requeues jobs that lack credits
+  - PEL reaper reclaims stuck messages after worker crash
+    </pre>
+
+    <h2>Why this architecture matters</h2>
+    <p>
+      This is a governance system: correctness under concurrency + predictable cost under contention.
+      Once that foundation exists, optimizations like shared heavy context become safe follow-ons.
+    </p>
+  </main>
 </body>
 </html>
