@@ -115,23 +115,28 @@
       <li><b>Fairness is enforced before execution</b>, not retroactively</li>
     </ul>
 
+    <!-- 🔁 ONLY SECTION REPLACED STARTS HERE -->
+
     <h2>End-to-end flow</h2>
 
-    <pre>
-Client → API
-  1) Create durable job record (state=QUEUED)
-  2) XADD {tenant_id, job_id} into sys:queue:jobs
+    <p class="lead">
+      This flow diagram is the heart of the system.
+      It shows how execution is made safe under concurrency, retries, and failure
+      by separating <b>decision-making</b> from <b>execution</b>.
+    </p>
 
-Worker (consumer group)
-  3) Read job_id → atomic CLAIM (charge quota + set RUNNING + create lease)
-  4) Execute while renewing lease
-  5) FINALIZE (set COMPLETED / FAILED + release lease)
-  6) XACK stream message
+    <p class="lead">
+      Key invariant while reading the diagram:
+      <b>workers never own state or resources permanently — they borrow execution rights under a lease.</b>
+    </p>
 
-Recovery paths
-  - Delayed scheduler requeues jobs that lack credits
-  - PEL reaper reclaims stuck messages after worker crash
-    </pre>
+    <img
+      src="flow-diagram.png"
+      alt="End-to-end agent execution flow"
+      style="max-width:100%; margin:24px 0; border:1px solid #e5e7eb; border-radius:12px;"
+    >
+
+    <!-- 🔁 ONLY SECTION REPLACED ENDS HERE -->
 
     <h2>Why this architecture matters</h2>
     <p class="lead">
