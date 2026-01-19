@@ -5,18 +5,57 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Economics & ROI — Multi-Tenant Agent Control Plane</title>
   <style>
-    body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; margin: 0; line-height: 1.55; }
-    header { padding: 22px 18px; border-bottom: 1px solid #e5e7eb; }
-    nav a { margin-right: 14px; text-decoration: none; color: #111827; }
-    main { max-width: 980px; margin: 0 auto; padding: 28px 18px 80px; }
-    h1 { margin: 0 0 10px; font-size: 28px; }
-    h2 { margin-top: 28px; font-size: 20px; }
-    .lead { color: #374151; font-size: 16px; }
-    .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; background: #fff; margin: 14px 0; }
-    .kicker { font-weight: 600; }
-    code { font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      line-height: 1.55;
+      color: #111827;
+    }
+    header {
+      padding: 22px 18px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    nav a {
+      margin-right: 14px;
+      text-decoration: none;
+      color: #111827;
+      font-weight: 500;
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 28px 18px 80px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+    h2 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+    .lead {
+      color: #374151;
+      font-size: 16px;
+      max-width: 850px;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: #ffffff;
+      margin: 14px 0;
+    }
+    .kicker {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    ul {
+      margin-top: 8px;
+    }
   </style>
 </head>
+
 <body>
   <header>
     <nav>
@@ -30,51 +69,49 @@
 
   <main>
     <h1>Economics & ROI</h1>
+
     <p class="lead">
-      AI doesn’t get expensive because it scales. It gets expensive because it scales without enforcement.
-      This model enforces cost and fairness using <b>GPU-seconds</b> and quota-based scheduling.
+      AI doesn’t get expensive because it scales.
+      It gets expensive because it scales without enforcement.
     </p>
 
     <h2>Why GPU-seconds</h2>
     <div class="card">
       <p>
-        You can’t reliably carve GPUs into fractions for arbitrary workloads.
-        So we enforce fairness over time:
+        GPUs cannot be reliably sliced for arbitrary workloads.
+        Instead of allocating fractions of hardware, this system enforces fairness over time.
       </p>
       <ul>
         <li>Each tenant earns credits at a fixed rate (token bucket).</li>
-        <li>Jobs consume credits at claim time.</li>
-        <li>If credits are insufficient, the job is delayed (backoff) instead of poisoning the queue.</li>
+        <li>Jobs consume credits when they are claimed.</li>
+        <li>If credits are insufficient, jobs are delayed instead of failing or poisoning the queue.</li>
       </ul>
     </div>
 
     <h2>What this enforces</h2>
     <div class="card">
       <ul>
-        <li><b>Predictable spend per tenant</b> (rate-limited by credits)</li>
-        <li><b>Controlled bursts</b> (burst cap)</li>
-        <li><b>Noisy-neighbor protection</b> (no monopolies)</li>
-        <li><b>Budget-safe scaling</b> (runaway loops self-throttle)</li>
+        <li><b>Predictable spend per tenant</b></li>
+        <li><b>Controlled burst behavior</b></li>
+        <li><b>Noisy-neighbor protection</b></li>
+        <li><b>Automatic containment of runaway agents</b></li>
       </ul>
     </div>
 
     <h2>Business impact</h2>
     <div class="card">
-      <p>
-        This aligns technical execution with financial reality:
-      </p>
       <ul>
-        <li><b>Utilization</b>: better bin-packing and fewer idle gaps.</li>
-        <li><b>Predictability</b>: spend becomes a function of policy, not surprise workload spikes.</li>
-        <li><b>Risk mitigation</b>: runaway agents hit quota and back off automatically.</li>
+        <li><b>Higher utilization</b> through better bin-packing and fewer idle gaps</li>
+        <li><b>Predictable cost curves</b> instead of surprise GPU bills</li>
+        <li><b>Built-in risk mitigation</b> for recursive or misconfigured agents</li>
       </ul>
     </div>
 
-    <h2>How this maps to the code</h2>
+    <h2>How this maps to the system</h2>
     <ul>
-      <li>Quota + refill logic: implemented in atomic Lua at CLAIM time.</li>
-      <li>Delayed jobs: move to delayed queue when credits are insufficient.</li>
-      <li>Enforcement: workers only execute once control plane grants a leased right-to-run.</li>
+      <li>Quota enforcement is done atomically at job claim time.</li>
+      <li>Workers only execute once the control plane grants a leased right-to-run.</li>
+      <li>Delayed execution preserves fairness without dropping work.</li>
     </ul>
   </main>
 </body>
