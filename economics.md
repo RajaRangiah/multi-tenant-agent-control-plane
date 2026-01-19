@@ -1,3 +1,9 @@
+AI doesn’t get expensive because it scales.  
+It gets expensive because it scales without enforcement.
+
+This model enforces cost and fairness using GPU-seconds and quota-based scheduling.
+
+
 # Cost and Fairness Model
 
 GPUs are enforced using **GPU-seconds**, not fractional GPUs.

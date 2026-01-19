@@ -1,3 +1,8 @@
+This architecture is built around one rule:
+
+**Workers execute. The system decides.**
+
+That separation is what makes fairness, retries, and crash recovery reliable at scale.
 # Architecture Overview
 
 This system treats GPUs as governed resources.
